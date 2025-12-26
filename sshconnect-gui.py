@@ -112,6 +112,51 @@ class TerminalProfile:
             env["GIT_SSH_COMMAND"] = f"ssh -i {shlex.quote(self.ssh_key_path)} -o IdentitiesOnly=yes"
         return env
 
+    def apply_persistent_identity(self, project_dir: str) -> tuple:
+        """Apply this profile's git identity permanently to a repository.
+
+        Creates a .gitconfig.local file in the project directory and configures
+        git to include it. The identity will persist across terminal sessions.
+
+        Args:
+            project_dir: Path to the git repository root
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
+        project_path = Path(project_dir)
+        git_dir = project_path / ".git"
+
+        if not git_dir.exists():
+            return False, "Not a git repository (no .git directory found)"
+
+        # Create .gitconfig.local
+        config_file = project_path / ".gitconfig.local"
+        config_content = f"[user]\n    name = {self.git_username}\n    email = {self.git_email}\n"
+
+        try:
+            config_file.write_text(config_content)
+        except OSError as e:
+            return False, f"Failed to create .gitconfig.local: {e}"
+
+        # Check if include.path is already set
+        try:
+            result = subprocess.run(
+                ["git", "-C", project_dir, "config", "--local", "--get", "include.path"],
+                capture_output=True, text=True
+            )
+            if ".gitconfig.local" not in result.stdout:
+                subprocess.run(
+                    ["git", "-C", project_dir, "config", "--local", "include.path", "../.gitconfig.local"],
+                    check=True
+                )
+        except subprocess.CalledProcessError as e:
+            return False, f"Failed to configure git include path: {e}"
+        except FileNotFoundError:
+            return False, "git command not found"
+
+        return True, f"Identity set for {project_path.name}: {self.git_username} <{self.git_email}>"
+
 
 class HostDialog(Gtk.Dialog):
     def __init__(self, parent, title="Add Host", host: Optional[SSHHost] = None):
@@ -1071,6 +1116,12 @@ class SSHConnectWindow(Gtk.Window):
         """Open a terminal with git environment variables set."""
         env = os.environ.copy()
         env.update(profile.get_environment())
+
+        # If working directory is a git repo, set persistent identity
+        if profile.working_dir:
+            git_dir = Path(profile.working_dir) / ".git"
+            if git_dir.exists():
+                profile.apply_persistent_identity(profile.working_dir)
 
         args = ["gnome-terminal"]
         if profile.working_dir:
