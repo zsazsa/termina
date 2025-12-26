@@ -25,3 +25,6 @@ sshconnect.desktop
 
 # Docs folder (contains personal examples)
 docs/
+
+# Claude Code local settings
+.claude/
