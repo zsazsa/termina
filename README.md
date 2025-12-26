@@ -122,17 +122,45 @@ Configuration is stored in `~/.sshconnect`:
 
 ## Terminal Profiles
 
-Terminal profiles launch a local terminal with git environment variables pre-configured:
+Terminal profiles solve a common problem: managing multiple GitHub accounts on the same machine.
+
+### Why Multiple Git Identities?
+
+GitHub identifies you by two things:
+1. **Commits**: The name and email in your git commits
+2. **Authentication**: The SSH key used to push/pull
+
+If you have both personal and work GitHub accounts, you need different credentials for each. Without terminal profiles, you'd manually reconfigure git each time you switch contexts.
+
+### How It Works
+
+When you launch a terminal profile, Termina sets environment variables that override your global git config:
 
 ```bash
-GIT_AUTHOR_NAME="myusername"
-GIT_COMMITTER_NAME="myusername"
-GIT_AUTHOR_EMAIL="me@work.com"
-GIT_COMMITTER_EMAIL="me@work.com"
+GIT_AUTHOR_NAME="Your Name"
+GIT_COMMITTER_NAME="Your Name"
+GIT_AUTHOR_EMAIL="<your-email>"
+GIT_COMMITTER_EMAIL="<your-email>"
 GIT_SSH_COMMAND="ssh -i /path/to/key -o IdentitiesOnly=yes"
 ```
 
-This is useful for managing multiple git identities (e.g., personal vs work GitHub accounts).
+The `GIT_SSH_COMMAND` ensures git uses the correct SSH key when pushing to GitHub, authenticating you to the right account.
+
+### Setup Workflow
+
+1. **Generate separate SSH keys** for each GitHub account:
+   ```bash
+   ssh-keygen -t ed25519 -f ~/.ssh/id_personal -C "personal"
+   ssh-keygen -t ed25519 -f ~/.ssh/id_work -C "work"
+   ```
+
+2. **Add each public key** to the corresponding GitHub account (Settings → SSH Keys)
+
+3. **Create terminal profiles** in Termina for each identity, specifying the matching SSH key path
+
+4. **Launch the appropriate profile** when working on projects for that account
+
+All commits made in that terminal session will use the correct identity, and pushes will authenticate to the correct GitHub account.
 
 ## Display Format
 
