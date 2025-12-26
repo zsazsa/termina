@@ -18,8 +18,8 @@ A fast and intuitive SSH connection manager and terminal profile launcher for GN
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/terminal-launcher.git ~/terminal-launcher
-cd ~/terminal-launcher
+git clone https://github.com/zsazsa/termina.git ~/termina
+cd ~/termina
 
 # Make executable
 chmod +x sshconnect-gui.py
@@ -151,7 +151,7 @@ rm ~/.local/share/applications/termina-launcher.desktop
 update-desktop-database ~/.local/share/applications/
 
 # Remove the application
-rm -rf ~/terminal-launcher
+rm -rf ~/termina
 
 # Remove configuration (optional)
 rm ~/.sshconnect
